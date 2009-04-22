@@ -47,26 +47,38 @@ studyCards = []
 for card in cards:
     studyCards.append(StudyCard(card))
 
-
-workingCards = []
-knownCards = []
-unknownCards=[]
-
-for card in studyCards:
-    unknownCards.append(card)
-
 workingCardCount = 5
 passingLevel = 3
 
-for index in range(0, workingCardCount):
-    card = random.choice(unknownCards)
-    workingCards.append(card)
-    unknownCards.remove(card)
+class StudyTask:
+    def __init__(self, studyCardsArg, keyArg):
+        self.studyCards = studyCardsArg
+        self.unknownCards = []
+        self.knownCards = []
+        self.workingCards = []
+        self.key = keyArg
+        for card in self.studyCards:
+            self.unknownCards.append(card)
+        for index in range(0, workingCardCount):
+            card = random.choice(self.unknownCards)
+            self.workingCards.append(card)
+            self.unknownCards.remove(card)
+
+
+
+class TwoWayStudyTask:
+    def __init__(self, studyCardsArg):
+        self.studyTask0 = StudyTask(studyCardsArg, 0)
+        self.studyTask1 = StudyTask(studyCardsArg, 1)
+
+
+twoWayTask = TwoWayStudyTask(studyCards)
 
 
 while True :
-    card = random.choice(workingCards)
-    which = card.myCard[0]
+    task = twoWayTask.studyTask1
+    card = random.choice(task.workingCards)
+    which = card.myCard[task.key]
 
     print which,
 
@@ -77,18 +89,18 @@ while True :
         break
     if ans == "" :
         card.skillLevel+=1
-        if card.skillLevel == passingLevel:
-            workingCards.remove(card)
-            knownCards.append(card)
+        if card.skillLevel >= passingLevel:
+            task.workingCards.remove(card)
+            task.knownCards.append(card)
             print card.myCard[0], " moved to known."
             if random.randint(0,1):
-                newCard = random.choice(knownCards)
-                knownCards.remove(newCard)
+                newCard = random.choice(task.knownCards)
+                task.knownCards.remove(newCard)
                 card.skillLevel-=1
             else:
-                newCard = random.choice(unknownCards)
-                unknownCards.remove(newCard)
-            workingCards.append(newCard)
+                newCard = random.choice(task.unknownCards)
+                task.unknownCards.remove(newCard)
+            task.workingCards.append(newCard)
     else:
         card.skillLevel=0
 
