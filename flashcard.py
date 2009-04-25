@@ -55,17 +55,12 @@ class TwoWayStudyTask:
         self.studyTask1 = StudyTask(studyCardsArg, 1)
 
 def importFromFile(file):
-    print file
     localForCards={'cards': []}
-    print len(localForCards['cards'])
     if (os.path.exists(file)):
-        print file, " exists."
         execfile(file, {}, localForCards)
     else:
         print file, " does not exist."
 
-    print len(localForCards['cards'])
-                          
     if len(localForCards['cards']) > 0 :
         print "Read", len(localForCards['cards']), "cards from", file
 
@@ -77,20 +72,34 @@ def main(argv):
     except getopt.GetoptError:   
         # usage()                 
         sys.exit(2)                
+
+    doImport = False
+    doRead = False
+    doWrite = False
     for opt, arg in opts:           
         if opt in ("-i", "--import"):
             importFile=arg
+            doImport = True
         elif opt in ("-r", "--read"):
             readFile=arg
+            doRead = True;
         elif opt in ("-w", "--write"):
             writeFile=arg
-    cards = importFromFile(importFile)
+            doWrite=True
 
-    studyCards = []
-    for card in cards:
-        studyCards.append(StudyCard(card))
+    if doImport:
+        cards = importFromFile(importFile)
 
-    twoWayTask = TwoWayStudyTask(studyCards)
+        studyCards = []
+        for card in cards:
+            studyCards.append(StudyCard(card))
+
+        twoWayTask = TwoWayStudyTask(studyCards)
+
+    if doRead:
+        readInput = open(readFile, 'r')
+        twoWayTask = pickle.load(readInput)
+
 
     while True :
         task = twoWayTask.studyTask1
@@ -121,10 +130,10 @@ def main(argv):
         else:
             card.skillLevel=0
 
-    output = open('data.pkl', 'wb')
-    pickle.dump(twoWayTask, output)
+    if doWrite:
+        output = open(writeFile, 'wb')
+        pickle.dump(twoWayTask, output)
 
 if __name__ == "__main__":
         main(sys.argv[1:])
-
 
