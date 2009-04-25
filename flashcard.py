@@ -15,23 +15,15 @@
 # This program is free software -- please share it under the terms
 # of the GNU Public License.
 
-import os, sys, random
+import os, sys, random, pickle, getopt
+
+workingCardCount = 5
+passingLevel = 3
 
 def print_card(card) :
     for word in card :
         print word, "      ",
     print ""
-
-
-cardset = "all"
-
-cardfile = os.path.join(os.path.expanduser("~"), "flashcards", cardset)
-
-if (os.path.exists(cardfile)) :
-    execfile(cardfile)
-                      
-if len(cards) > 0 :
-    print "Read", len(cards), "cards from", cardfile
 
 class StudyCard:
     # "store a card and how well known it is."              1
@@ -42,13 +34,6 @@ class StudyCard:
 
     def show(self):
         print_card(self.myCard)
-
-studyCards = []
-for card in cards:
-    studyCards.append(StudyCard(card))
-
-workingCardCount = 5
-passingLevel = 3
 
 class StudyTask:
     def __init__(self, studyCardsArg, keyArg):
@@ -64,43 +49,82 @@ class StudyTask:
             self.workingCards.append(card)
             self.unknownCards.remove(card)
 
-
-
 class TwoWayStudyTask:
     def __init__(self, studyCardsArg):
         self.studyTask0 = StudyTask(studyCardsArg, 0)
         self.studyTask1 = StudyTask(studyCardsArg, 1)
 
-
-twoWayTask = TwoWayStudyTask(studyCards)
-
-
-while True :
-    task = twoWayTask.studyTask1
-    card = random.choice(task.workingCards)
-    which = card.myCard[task.key]
-
-    print which,
-
-    ans = raw_input()
-    card.show()
-    ans = raw_input()
-    if ans == "q" :
-        break
-    if ans == "" :
-        card.skillLevel+=1
-        if card.skillLevel >= passingLevel:
-            task.workingCards.remove(card)
-            task.knownCards.append(card)
-            print card.myCard[0], " moved to known."
-            if random.randint(0,1):
-                newCard = random.choice(task.knownCards)
-                task.knownCards.remove(newCard)
-                card.skillLevel-=1
-            else:
-                newCard = random.choice(task.unknownCards)
-                task.unknownCards.remove(newCard)
-            task.workingCards.append(newCard)
+def importFromFile(file):
+    print file
+    localForCards={'cards': []}
+    print len(localForCards['cards'])
+    if (os.path.exists(file)):
+        print file, " exists."
+        execfile(file, {}, localForCards)
     else:
-        card.skillLevel=0
+        print file, " does not exist."
+
+    print len(localForCards['cards'])
+                          
+    if len(localForCards['cards']) > 0 :
+        print "Read", len(localForCards['cards']), "cards from", file
+
+    return localForCards['cards']
+
+def main(argv):                         
+    try:                                
+        opts, args = getopt.getopt(argv, "r:w:i:", ["read=", "write=", "import="])
+    except getopt.GetoptError:   
+        # usage()                 
+        sys.exit(2)                
+    for opt, arg in opts:           
+        if opt in ("-i", "--import"):
+            importFile=arg
+        elif opt in ("-r", "--read"):
+            readFile=arg
+        elif opt in ("-w", "--write"):
+            writeFile=arg
+    cards = importFromFile(importFile)
+
+    studyCards = []
+    for card in cards:
+        studyCards.append(StudyCard(card))
+
+    twoWayTask = TwoWayStudyTask(studyCards)
+
+    while True :
+        task = twoWayTask.studyTask1
+        card = random.choice(task.workingCards)
+        which = card.myCard[task.key]
+
+        print which,
+
+        ans = raw_input()
+        card.show()
+        ans = raw_input()
+        if ans == "q" :
+            break
+        if ans == "" :
+            card.skillLevel+=1
+            if card.skillLevel >= passingLevel:
+                task.workingCards.remove(card)
+                task.knownCards.append(card)
+                print card.myCard[0], " moved to known."
+                if random.randint(0,1):
+                    newCard = random.choice(task.knownCards)
+                    task.knownCards.remove(newCard)
+                    card.skillLevel-=1
+                else:
+                    newCard = random.choice(task.unknownCards)
+                    task.unknownCards.remove(newCard)
+                task.workingCards.append(newCard)
+        else:
+            card.skillLevel=0
+
+    output = open('data.pkl', 'wb')
+    pickle.dump(twoWayTask, output)
+
+if __name__ == "__main__":
+        main(sys.argv[1:])
+
 
