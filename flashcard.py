@@ -17,7 +17,7 @@
 
 import os, sys, random, pickle, getopt
 
-workingCardCount = 5
+workingCardCount = 15
 passingLevel = 3
 
 def print_card(card) :
@@ -44,10 +44,6 @@ class StudyTask:
         self.key = keyArg
         for card in self.studyCards:
             self.unknownCards.append(card)
-        for index in range(0, workingCardCount):
-            card = random.choice(self.unknownCards)
-            self.workingCards.append(card)
-            self.unknownCards.remove(card)
 
 class TwoWayStudyTask:
     def __init__(self, studyCardsArg):
@@ -102,7 +98,15 @@ def main(argv):
 
 
     while True :
+
         task = twoWayTask.studyTask1
+
+        while(len(task.workingCards) < workingCardCount):
+            card = random.choice(task.unknownCards)
+            card.skillLevel = passingLevel - 1
+            task.workingCards.append(card)
+            task.unknownCards.remove(card)
+
         card = random.choice(task.workingCards)
         which = card.myCard[task.key]
 
@@ -118,15 +122,14 @@ def main(argv):
             if card.skillLevel >= passingLevel:
                 task.workingCards.remove(card)
                 task.knownCards.append(card)
-                print card.myCard[0], " moved to known."
+                print "KNOWN: ", len(task.knownCards)
+                print "UNKNOWN: ", len(task.unknownCards)
+                print "WORKING: ", len(task.workingCards)
                 if random.randint(0,1):
                     newCard = random.choice(task.knownCards)
                     task.knownCards.remove(newCard)
-                    card.skillLevel-=1
-                else:
-                    newCard = random.choice(task.unknownCards)
-                    task.unknownCards.remove(newCard)
-                task.workingCards.append(newCard)
+                    card.skillLevel = passingLevel - 1
+                    task.workingCards.append(newCard)
         else:
             card.skillLevel=0
 
